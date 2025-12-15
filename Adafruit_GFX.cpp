@@ -2659,29 +2659,40 @@ void GFXcanvas16::drawFastHLine(int16_t x, int16_t y, int16_t w,
 
 /**************************************************************************/
 /*!
-   @brief    Draw an ellipse with rotation (enhanced version)
+   @brief    Draw a pentagram (5-pointed star)
    @param    x0   Center-point x coordinate
    @param    y0   Center-point y coordinate
-   @param    a    Semi-major axis (half width)
-   @param    b    Semi-minor axis (half height)
-   @param    rotation Rotation angle in degrees
+   @param    r    Outer radius (distance from center to outer points)
    @param    color 16-bit 5-6-5 Color to draw with
 */
 /**************************************************************************/
-void Adafruit_GFX::drawEllipseEx(int16_t x0, int16_t y0, int16_t a, int16_t b, float rotation, uint16_t color) {
+void Adafruit_GFX::drawPentagram(int16_t x0, int16_t y0, int16_t r, uint16_t color) {
   const float pi = 3.1415926;
-  const float rot_rad = rotation * pi / 180.0;
+  const float angle_step = 2 * pi / 5;
+  
+  int16_t outer_points[5][2];
+  int16_t inner_points[5][2];
+  
+  //      ⲿ   ڲ   
+  for (int i = 0; i < 5; i++) {
+    //  ⲿ  
+    float angle = i * angle_step - pi/2; //  Ӷ     ʼ
+    outer_points[i][0] = x0 + r * cos(angle);
+    outer_points[i][1] = y0 + r * sin(angle);
+    
+    //  ڲ  㣨 뾶    Լ0.38   γ   ȷ     Σ 
+    float inner_angle = angle + angle_step/2;
+    float inner_r = r * 0.38;
+    inner_points[i][0] = x0 + inner_r * cos(inner_angle);
+    inner_points[i][1] = y0 + inner_r * sin(inner_angle);
+  }
   
   startWrite();
-  for (float angle = 0; angle < 2 * pi; angle += 0.1) {
-    float x = a * cos(angle);
-    float y = b * sin(angle);
-    
-    // Ӧ����ת
-    float rot_x = x * cos(rot_rad) - y * sin(rot_rad);
-    float rot_y = x * sin(rot_rad) + y * cos(rot_rad);
-    
-    writePixel(x0 + (int16_t)rot_x, y0 + (int16_t)rot_y, color);
+  // ͨ           ⲿ   ڲ             
+  for (int i = 0; i < 5; i++) {
+    int next_i = (i + 2) % 5; //     һ       γ     ͼ  
+    writeLine(outer_points[i][0], outer_points[i][1], 
+              inner_points[next_i][0], inner_points[next_i][1], color);
   }
   endWrite();
 }
